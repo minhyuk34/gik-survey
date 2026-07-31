@@ -207,12 +207,6 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
         <select id="coldAccessories"><option value="">Select</option><option>Yes</option><option>No</option></select>
       </div>
     </div>
-    <div class="form-row">
-      <div class="field" style="grid-column:1/-1;">
-        <label>Other items requested (please specify)</label>
-        <textarea id="otherItemsDetail" placeholder="Describe any additional items, quantities, and specifications"></textarea>
-      </div>
-    </div>
   </div>
 
   <!-- Eyewear Section (Enhanced) -->
@@ -283,7 +277,7 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
 
   <!-- Other Items Requested (General) -->
   <div class="form-group">
-    <h3>📦 Other Items Requested</h3>
+    <h3>🎁 Other Items Requested</h3>
     <div class="form-row">
       <div class="field" style="grid-column:1/-1;">
         <label>Any other items needed that are not covered above?</label>
@@ -442,8 +436,7 @@ function getFormData() {
       summer: document.getElementById('summer').value,
       transitional: document.getElementById('transitional').value,
       winter: document.getElementById('winter').value,
-      coldAccessories: document.getElementById('coldAccessories').value,
-      otherItemsDetail: document.getElementById('otherItemsDetail').value
+      coldAccessories: document.getElementById('coldAccessories').value
     },
     eyewear: {
       eyeglasses: document.getElementById('eyeglasses').value,
@@ -598,13 +591,13 @@ const FIELD_LABELS = {
   storageFacility:'Storage Facility', storageCapacity:'Storage Capacity (㎡)',
   distPersonnel:'Distribution Personnel', distDept:'Responsible Team(s)/Department(s)',
   summer:'Summer Clothing', transitional:'Transitional Clothing', winter:'Winter Clothing',
-  coldAccessories:'Cold Accessories', otherItemsDetail:'Other Items Requested (Clothing)',
+  coldAccessories:'Cold Accessories',
   eyeglasses:'Eyeglasses', sunglasses:'Sunglasses', eyewearSpecsConfirmed:'Donor-Confirmed Age/Size Specs',
   eyeChildQty:'Eyeglasses - Children Qty', eyeTeenQty:'Eyeglasses - Teens Qty',
   eyeAdultMQty:'Eyeglasses - Adult M Qty', eyeAdultLQty:'Eyeglasses - Adult L Qty', eyeRemarks:'Eyeglasses Remarks',
   sunChildQty:'Sunglasses - Children Qty', sunTeenQty:'Sunglasses - Teens Qty',
   sunAdultMQty:'Sunglasses - Adult M Qty', sunAdultLQty:'Sunglasses - Adult L Qty', sunRemarks:'Sunglasses Remarks',
-  avoidItemsDetail:'Items to Avoid', otherItemsGeneral:'Other Items Requested (General)', comments:'Comments & Questions'
+  avoidItemsDetail:'Items to Avoid', otherItemsGeneral:'Other Items Requested', comments:'Comments & Questions'
 };
 
 function flattenFields(data) {
