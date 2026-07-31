@@ -332,6 +332,7 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
   <h2 style="margin-bottom:20px;">Q&A / FAQ</h2>
   <div class="qa-form">
     <h3 style="margin-bottom:12px;">Ask a Question</h3>
+    <input type="text" id="questionerName" placeholder="Your name" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:4px;font-size:0.9rem;margin-bottom:12px;">
     <textarea id="newQuestion" placeholder="Type your question here... (All FOs can see questions and answers)"></textarea>
     <div style="display:flex;gap:12px;align-items:center;">
       <button class="btn btn-primary" onclick="postQuestion()">Post Question</button>
@@ -701,12 +702,15 @@ function autoGrow(el) {
 // ===== Q&A: Real-time =====
 function postQuestion() {
   const q = document.getElementById('newQuestion').value.trim();
+  const name = document.getElementById('questionerName').value.trim();
+  if(!name){alert('Please enter your name.');return;}
   if(!q){alert('Please enter a question.');return;}
   const country = document.getElementById('countrySelect').value || 'Unknown';
   const today = new Date().toISOString().split('T')[0];
 
   const questionData = {
     question: q,
+    askedByName: name,
     askedBy: country,
     date: today,
     answer: ''
@@ -714,6 +718,7 @@ function postQuestion() {
 
   db.ref('qa').push(questionData).then(() => {
     document.getElementById('newQuestion').value = '';
+    document.getElementById('questionerName').value = '';
     renderQA();
   }).catch(err => alert('❌ Error posting question: ' + err.message));
 }
@@ -777,7 +782,7 @@ function renderQA() {
           <div class="question">Q: ${item.question}</div>
           ${deleteBtn}
         </div>
-        <div class="meta">Asked by: ${item.askedBy} FO | ${item.date}</div>
+        <div class="meta">Asked by: ${item.askedByName ? item.askedByName + ' (' + item.askedBy + ' FO)' : item.askedBy + ' FO'} | ${item.date}</div>
         ${answerHtml}
       </div>`;
     });
