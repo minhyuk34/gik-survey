@@ -345,17 +345,17 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
     <div class="qa-post">
       <div class="question">Q: What is the deadline for submitting the needs assessment?</div>
       <div class="meta">Asked by: WV Korea | 2026-07-28</div>
-      <div class="answer"><strong>A:</strong> The deadline is August 14, 2026 (Friday). Please submit before the deadline to ensure your needs are included in the procurement plan.</div>
+      <div class="answer"><strong>A (WV Korea):</strong> The deadline is August 14, 2026 (Friday). Please submit before the deadline to ensure your needs are included in the procurement plan.</div>
     </div>
     <div class="qa-post">
       <div class="question">Q: Can we request items not listed in the template?</div>
       <div class="meta">Asked by: WV Korea | 2026-07-27</div>
-      <div class="answer"><strong>A:</strong> Yes, please use the "Other Items Requested" field to specify any additional items with quantities and specifications.</div>
+      <div class="answer"><strong>A (WV Korea):</strong> Yes, please use the "Other Items Requested" field to specify any additional items with quantities and specifications.</div>
     </div>
     <div class="qa-post">
       <div class="question">Q: Do we need to provide exact tariff rates or estimates?</div>
       <div class="meta">Asked by: WV Korea | 2026-07-25</div>
-      <div class="answer"><strong>A:</strong> Please provide the official tariff rate if available. If not, provide your best estimate and note it as estimated.</div>
+      <div class="answer"><strong>A (WV Korea):</strong> Please provide the official tariff rate if available. If not, provide your best estimate and note it as estimated.</div>
     </div>
   </div>
   <div id="qaListDynamic"></div>
@@ -399,7 +399,7 @@ const countries = [
 ];
 
 // ===== Navigation =====
-const ADMIN_PASSWORD = 'CHANGE_THIS_PASSWORD';
+const ADMIN_PASSWORD = 'wvk2000';
 let adminUnlocked = false;
 
 function showSection(id) {
@@ -719,6 +719,7 @@ function postQuestion() {
 }
 
 function postAnswer(key) {
+  if(!adminUnlocked){ alert('🔒 관리자 로그인이 필요합니다.'); return; }
   const input = document.getElementById('answerInput-' + key);
   const answer = input.value.trim();
   if(!answer){alert('Please enter an answer.');return;}
@@ -728,6 +729,17 @@ function postAnswer(key) {
   }).catch(err => alert('❌ Error posting answer: ' + err.message));
 }
 
+function unlockAdminForQA() {
+  if(adminUnlocked){ renderQA(); return; }
+  const pw = prompt('🔒 관리자 비밀번호를 입력하세요:');
+  if(pw !== ADMIN_PASSWORD) {
+    if(pw !== null) alert('비밀번호가 올바르지 않습니다.');
+    return;
+  }
+  adminUnlocked = true;
+  renderQA();
+}
+
 function renderQA() {
   db.ref('qa').orderByChild('date').once('value').then(snapshot => {
     const qaListDynamic = document.getElementById('qaListDynamic');
@@ -735,12 +747,20 @@ function renderQA() {
     const items = [];
     snapshot.forEach(child => { items.push({...child.val(), key: child.key}); });
     items.reverse().forEach(item => {
-      const answerHtml = item.answer
-        ? `<div class="answer"><strong>A:</strong> ${item.answer}</div>`
-        : `<div class="qa-answer-form">
-             <textarea id="answerInput-${item.key}" placeholder="Anyone can write an answer..."></textarea>
+      let answerHtml;
+      if(item.answer) {
+        answerHtml = `<div class="answer"><strong>A (WV Korea):</strong> ${item.answer}</div>`;
+      } else if(adminUnlocked) {
+        answerHtml = `<div class="qa-answer-form">
+             <textarea id="answerInput-${item.key}" placeholder="Write the official WV Korea answer..."></textarea>
              <button class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;" onclick="postAnswer('${item.key}')">Submit Answer</button>
            </div>`;
+      } else {
+        answerHtml = `<div style="font-size:0.85rem;color:var(--wv-gray);display:flex;align-items:center;gap:10px;">
+             <span>⏳ Awaiting response from WV Korea</span>
+             <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.8rem;" onclick="unlockAdminForQA()">🔒 Admin Login</button>
+           </div>`;
+      }
       html += `<div class="qa-post">
         <div class="question">Q: ${item.question}</div>
         <div class="meta">Asked by: ${item.askedBy} FO | ${item.date}</div>
