@@ -729,6 +729,14 @@ function postAnswer(key) {
   }).catch(err => alert('❌ Error posting answer: ' + err.message));
 }
 
+function deleteQuestion(key) {
+  if(!adminUnlocked){ alert('🔒 관리자 로그인이 필요합니다.'); return; }
+  if(!confirm('이 질문(및 답변)을 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
+  db.ref('qa/' + key).remove().then(() => {
+    renderQA();
+  }).catch(err => alert('❌ Error deleting question: ' + err.message));
+}
+
 function unlockAdminForQA() {
   if(adminUnlocked){ renderQA(); return; }
   const pw = prompt('🔒 관리자 비밀번호를 입력하세요:');
@@ -761,8 +769,14 @@ function renderQA() {
              <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.8rem;" onclick="unlockAdminForQA()">🔒 Admin Login</button>
            </div>`;
       }
+      const deleteBtn = adminUnlocked
+        ? `<button class="btn btn-secondary" style="padding:4px 12px;font-size:0.75rem;color:#c0392b;border-color:#c0392b;flex-shrink:0;" onclick="deleteQuestion('${item.key}')">🗑️ Delete</button>`
+        : '';
       html += `<div class="qa-post">
-        <div class="question">Q: ${item.question}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div class="question">Q: ${item.question}</div>
+          ${deleteBtn}
+        </div>
         <div class="meta">Asked by: ${item.askedBy} FO | ${item.date}</div>
         ${answerHtml}
       </div>`;
