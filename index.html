@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 GIK FO Needs Assessment</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --wv-orange: #FF6B00;
+  --wv-dark: #1a1a2e;
+  --wv-blue: #16213e;
+  --wv-light: #f8f9fa;
+  --wv-green: #28a745;
+  --wv-gray: #6c757d;
+  --radius: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Tahoma,sans-serif; background:var(--wv-light); color:#333; }
+.header { background:linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color:#fff; padding:28px 32px; display:flex; align-items:center; justify-content:center; gap:24px; position:relative; overflow:hidden; min-height:140px; }
+.header::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80') center/cover no-repeat; opacity:0.2; }
+.header * { position:relative; z-index:1; }
+.header-logo { width:60px; height:60px; background:var(--wv-orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:bold; color:#fff; flex-shrink:0; }
+.header h1 { font-size:2rem; font-weight:700; text-shadow:0 2px 4px rgba(0,0,0,.3); }
+.header .subtitle { font-size:1.1rem; color:#ddd; margin-top:6px; }
+.tabs { display:flex; justify-content:center; background:#fff; border-bottom:2px solid #eee; padding:0 32px; }
+.tab { padding:16px 28px; cursor:pointer; font-weight:600; font-size:1.1rem; border-bottom:3px solid transparent; transition:all .2s; }
+.tab:hover { color:var(--wv-orange); }
+.tab.active { color:var(--wv-orange); border-bottom-color:var(--wv-orange); }
+.container { max-width:1400px; margin:0 auto; padding:24px 32px; text-align:center; }
+.form-group, .qa-form, .qa-post { text-align:left; }
+.section { display:none; }
+.section.active { display:block; }
+
+/* Survey Form */
+.country-selector { margin-bottom:24px; }
+.country-selector select { padding:10px 16px; font-size:1rem; border:1px solid #ddd; border-radius:var(--radius); min-width:250px; }
+.form-group { background:#fff; border-radius:var(--radius); padding:24px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.form-group h3 { color:var(--wv-orange); margin-bottom:16px; font-size:1.15rem; border-bottom:1px solid #eee; padding-bottom:8px; }
+.form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:12px; }
+.field { display:flex; flex-direction:column; gap:4px; }
+.field label { font-size:0.95rem; font-weight:500; color:#555; }
+.field input, .field select, .field textarea { padding:10px 14px; border:1px solid #ddd; border-radius:4px; font-size:1rem; }
+.field textarea { resize:vertical; min-height:60px; }
+.radio-group { display:flex; gap:16px; align-items:center; padding:8px 0; }
+.radio-group label { font-size:0.9rem; cursor:pointer; display:flex; align-items:center; gap:4px; }
+.btn { padding:12px 32px; border:none; border-radius:var(--radius); font-size:1rem; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-primary { background:var(--wv-orange); color:#fff; }
+.btn-primary:hover { background:#e05e00; }
+.btn-secondary { background:#fff; color:var(--wv-orange); border:2px solid var(--wv-orange); }
+.actions { display:flex; justify-content:center; gap:12px; margin-top:24px; }
+
+/* Dashboard */
+.dashboard-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:24px; }
+.stat-card { background:#fff; border-radius:var(--radius); padding:16px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.stat-card .number { font-size:2rem; font-weight:700; color:var(--wv-orange); }
+.stat-card .label { font-size:0.8rem; color:var(--wv-gray); }
+table { width:100%; border-collapse:collapse; background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #eee; font-size:0.85rem; }
+th { background:var(--wv-dark); color:#fff; font-weight:500; }
+.status-badge { padding:3px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; }
+.status-complete { background:#d4edda; color:#155724; }
+.status-pending { background:#fff3cd; color:#856404; }
+
+/* Q&A */
+.qa-post { background:#fff; border-radius:var(--radius); padding:20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.qa-post .question { font-weight:600; margin-bottom:8px; }
+.qa-post .meta { font-size:0.8rem; color:var(--wv-gray); margin-bottom:12px; }
+.qa-post .answer { background:var(--wv-light); padding:12px; border-radius:4px; border-left:3px solid var(--wv-orange); }
+.qa-form { background:#fff; border-radius:var(--radius); padding:24px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.qa-form textarea { width:100%; padding:12px; border:1px solid #ddd; border-radius:4px; min-height:80px; margin-bottom:12px; font-size:0.9rem; }
+.qa-answer-form textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; min-height:50px; font-size:0.85rem; margin-bottom:8px; }
+
+/* Eyewear detail */
+.eyewear-detail { background:#eaf4ff; border:1px solid #7ab8f5; border-radius:var(--radius); padding:16px; margin-top:12px; }
+.eyewear-detail h4 { font-size:0.9rem; color:#000; margin-bottom:12px; }
+.eyewear-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.eyewear-table th, .eyewear-table td { padding:6px 10px; border:1px solid #ddd; font-size:0.8rem; text-align:center; color:#000; }
+.eyewear-table th { background:#cfe6ff; font-weight:700; }
+.eyewear-table input { width:70px; padding:4px; text-align:center; border:1px solid #ccc; border-radius:3px; }
+.eyewear-table textarea { width:100%; padding:4px 6px; text-align:left; border:1px solid #ccc; border-radius:3px; font-family:inherit; font-size:0.8rem; resize:none; overflow:hidden; min-height:26px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">WVK</div>
+  <div>
+    <h1>2026 Overseas GIK FO Needs Assessment</h1>
+    <div class="subtitle">Asset Fund Team × International Impact Project Team | World Vision Korea</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showSection('survey')">📋 Needs Assessment</div>
+  <div class="tab" onclick="showSection('dashboard')">📊 Monitoring Dashboard</div>
+  <div class="tab" onclick="showSection('qa')">💬 Q&A / FAQ</div>
+  <div class="tab" onclick="showSection('admin')">🗂️ Admin</div>
+</div>
+
+<!-- SECTION 1: SURVEY -->
+<div class="container">
+<div id="survey" class="section active">
+  <div class="country-selector">
+    <div class="form-row" style="text-align:left;max-width:900px;margin:0 auto;">
+      <div class="field">
+        <label><strong>Select your Field Office</strong></label>
+        <select id="countrySelect" onchange="loadCountryData()">
+          <option value="">-- Select Country --</option>
+          <option value="Cambodia">Cambodia (EASO)</option>
+          <option value="Laos">Laos (EASO)</option>
+          <option value="Mongolia">Mongolia (EASO)</option>
+          <option value="Myanmar">Myanmar (EASO)</option>
+          <option value="Vietnam">Vietnam (EASO)</option>
+          <option value="Bangladesh">Bangladesh (SAPO)</option>
+          <option value="India">India (SAPO)</option>
+          <option value="Indonesia">Indonesia (SAPO)</option>
+          <option value="Nepal">Nepal (SAPO)</option>
+          <option value="Philippines">Philippines (SAPO)</option>
+          <option value="Sri Lanka">Sri Lanka (SAPO)</option>
+          <option value="Guatemala">Guatemala (LACRO)</option>
+          <option value="Albania">Albania (MEERO)</option>
+          <option value="Bosnia-Herzegovina">Bosnia-Herzegovina (MEERO)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contact Person</label>
+        <input type="text" id="contactPerson" placeholder="Name of contact person">
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="contactEmail" placeholder="email@example.com">
+      </div>
+    </div>
+  </div>
+
+  <!-- Customs & Logistics -->
+  <div class="form-group">
+    <h3>🚢 Customs Clearance & Logistics Capacity</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Eligibility for customs duty exemption</label>
+        <select id="dutyExemption"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Applicable tariff rate (%)</label>
+        <input type="text" id="tariffRate" placeholder="e.g., 10%">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Delivery address</label>
+        <textarea id="deliveryAddr" placeholder="Full delivery address for shipments"></textarea>
+      </div>
+      <div class="field">
+        <label>Local freight forwarder details</label>
+        <textarea id="forwarder" placeholder="Company name, contact person, phone, email"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>In-house storage facility</label>
+        <select id="storageFacility"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Warehouse storage capacity (㎡)</label>
+        <input type="text" id="storageCapacity" placeholder="e.g., 200㎡">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Distribution personnel available</label>
+        <select id="distPersonnel"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Department of distribution personnel</label>
+        <input type="text" id="distDept" placeholder="e.g., Logistics Dept.">
+      </div>
+    </div>
+  </div>
+
+  <!-- Item Needs -->
+  <div class="form-group">
+    <h3>👕 Item Needs Assessment</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Summer clothing</label>
+        <select id="summer"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Transitional-season clothing</label>
+        <select id="transitional"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Winter / cold-weather clothing</label>
+        <select id="winter"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Cold-weather accessories (gloves, hats, scarves, blankets)</label>
+        <select id="coldAccessories"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Other items requested (please specify)</label>
+        <textarea id="otherItemsDetail" placeholder="Describe any additional items, quantities, and specifications"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eyewear Section (Enhanced) -->
+  <div class="form-group">
+    <h3>👓 Eyewear Needs Assessment</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Eyeglasses - non-prescription frames</label>
+        <select id="eyeglasses" onchange="toggleEyewearDetail()"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field">
+        <label>Sunglasses - non-prescription</label>
+        <select id="sunglasses" onchange="toggleEyewearDetail()"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+    <div id="eyewearDetail" class="eyewear-detail" style="display:none;">
+      <h4>📐 Eyewear Detailed Requirements (Quantity & Size by Target Group)</h4>
+      <p style="font-size:0.8rem;color:#555;margin-bottom:12px;">Please enter the estimated quantity needed for each target group/size.</p>
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="field" style="grid-column:1/-1;">
+          <label>Has the donor company already confirmed age-group/size specifications (Children, Teens, Adult M/L)?</label>
+          <select id="eyewearSpecsConfirmed"><option value="">Select</option><option>Yes</option><option>No</option></select>
+        </div>
+      </div>
+      <table class="eyewear-table">
+        <thead>
+          <tr>
+            <th style="width:18%;">Type</th>
+            <th style="width:9%;">Children</th>
+            <th style="width:9%;">Teens</th>
+            <th style="width:9%;">Adult M</th>
+            <th style="width:9%;">Adult L</th>
+            <th style="width:46%;">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Eyeglass Frames (Non-Prescription)</strong></td>
+            <td><input type="number" id="eyeChildQty" min="0"></td>
+            <td><input type="number" id="eyeTeenQty" min="0"></td>
+            <td><input type="number" id="eyeAdultMQty" min="0"></td>
+            <td><input type="number" id="eyeAdultLQty" min="0"></td>
+            <td><textarea id="eyeRemarks" rows="1" oninput="autoGrow(this)"></textarea></td>
+          </tr>
+          <tr>
+            <td><strong>Sunglasses</strong></td>
+            <td><input type="number" id="sunChildQty" min="0"></td>
+            <td><input type="number" id="sunTeenQty" min="0"></td>
+            <td><input type="number" id="sunAdultMQty" min="0"></td>
+            <td><input type="number" id="sunAdultLQty" min="0"></td>
+            <td><textarea id="sunRemarks" rows="1" oninput="autoGrow(this)"></textarea></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Other Items -->
+  <div class="form-group">
+    <h3>📦 Restrictions</h3>
+    <div class="form-row">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Items to avoid (e.g. religious/cultural reasons)</label>
+        <textarea id="avoidItemsDetail" placeholder="Please specify items to avoid and the reason, e.g., Pork-related products due to religious reasons"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments -->
+  <div class="form-group">
+    <h3>📝 Comments & Suggestions</h3>
+    <div class="form-row">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Please share any comments or suggestions</label>
+        <textarea id="comments" placeholder="Any additional comments or suggestions"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="submitSurvey()">Submit Response</button>
+    <button class="btn btn-secondary" onclick="saveDraft()">Save as Draft</button>
+  </div>
+</div>
+
+<!-- SECTION 2: DASHBOARD -->
+<div id="dashboard" class="section">
+  <h2 style="margin-bottom:20px;">Monitoring Dashboard</h2>
+  <div class="dashboard-grid">
+    <div class="stat-card"><div class="number" id="totalResponses">3</div><div class="label">Submitted</div></div>
+    <div class="stat-card"><div class="number" id="pendingCount">11</div><div class="label">Pending</div></div>
+    <div class="stat-card"><div class="number">14</div><div class="label">Total FOs</div></div>
+    <div class="stat-card"><div class="number" id="completionRate">21%</div><div class="label">Completion</div></div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>No.</th><th>Continent</th><th>Region</th><th>Country</th><th>Status</th><th>Last Updated</th></tr>
+    </thead>
+    <tbody id="dashboardBody">
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 3: Q&A -->
+<div id="qa" class="section">
+  <h2 style="margin-bottom:20px;">Q&A / FAQ</h2>
+  <div class="qa-form">
+    <h3 style="margin-bottom:12px;">Ask a Question</h3>
+    <textarea id="newQuestion" placeholder="Type your question here... (All FOs can see questions and answers)"></textarea>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button class="btn btn-primary" onclick="postQuestion()">Post Question</button>
+      <span style="font-size:0.8rem;color:var(--wv-gray);">* Questions and answers are visible to all Field Offices</span>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:4px;">Frequently Asked Questions</h3>
+  <p style="font-size:0.8rem;color:var(--wv-gray);font-style:italic;margin-bottom:12px;">* Answers are provided by World Vision Korea.</p>
+  <div id="qaList">
+    <div class="qa-post">
+      <div class="question">Q: What is the deadline for submitting the needs assessment?</div>
+      <div class="meta">Asked by: WV Korea | 2026-07-28</div>
+      <div class="answer"><strong>A:</strong> The deadline is August 14, 2026 (Friday). Please submit before the deadline to ensure your needs are included in the procurement plan.</div>
+    </div>
+    <div class="qa-post">
+      <div class="question">Q: Can we request items not listed in the template?</div>
+      <div class="meta">Asked by: WV Korea | 2026-07-27</div>
+      <div class="answer"><strong>A:</strong> Yes, please use the "Other Items Requested" field to specify any additional items with quantities and specifications.</div>
+    </div>
+    <div class="qa-post">
+      <div class="question">Q: Do we need to provide exact tariff rates or estimates?</div>
+      <div class="meta">Asked by: WV Korea | 2026-07-25</div>
+      <div class="answer"><strong>A:</strong> Please provide the official tariff rate if available. If not, provide your best estimate and note it as estimated.</div>
+    </div>
+  </div>
+  <div id="qaListDynamic"></div>
+</div>
+
+<!-- SECTION 4: ADMIN -->
+<div id="admin" class="section">
+  <h2 style="margin-bottom:20px;">Admin Management</h2>
+  <div class="actions" style="justify-content:flex-start;margin-bottom:20px;">
+    <button class="btn btn-primary" onclick="exportToCSV()">⬇️ Export All to Excel (CSV)</button>
+  </div>
+  <div id="adminList"></div>
+</div>
+</div>
+
+<script>
+// ===== Firebase Configuration =====
+// TODO: Replace with your Firebase project config from https://console.firebase.google.com
+const firebaseConfig = {
+  databaseURL: "https://gikwvk-5dd20-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gikwvk-5dd20"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===== Country Master Data =====
+const countries = [
+  {no:1,continent:'Asia',region:'EASO',country:'Cambodia'},
+  {no:2,continent:'Asia',region:'EASO',country:'Laos'},
+  {no:3,continent:'Asia',region:'EASO',country:'Mongolia'},
+  {no:4,continent:'Asia',region:'EASO',country:'Myanmar'},
+  {no:5,continent:'Asia',region:'EASO',country:'Vietnam'},
+  {no:6,continent:'Asia',region:'SAPO',country:'Bangladesh'},
+  {no:7,continent:'Asia',region:'SAPO',country:'India'},
+  {no:8,continent:'Asia',region:'SAPO',country:'Indonesia'},
+  {no:9,continent:'Asia',region:'SAPO',country:'Nepal'},
+  {no:10,continent:'Asia',region:'SAPO',country:'Philippines'},
+  {no:11,continent:'Asia',region:'SAPO',country:'Sri Lanka'},
+  {no:12,continent:'Americas',region:'LACRO',country:'Guatemala'},
+  {no:13,continent:'Europe',region:'MEERO',country:'Albania'},
+  {no:14,continent:'Europe',region:'MEERO',country:'Bosnia-Herzegovina'}
+];
+
+// ===== Navigation =====
+const ADMIN_PASSWORD = 'CHANGE_THIS_PASSWORD';
+let adminUnlocked = false;
+
+function showSection(id) {
+  if(id === 'admin' && !adminUnlocked) {
+    const pw = prompt('🔒 관리자 비밀번호를 입력하세요:');
+    if(pw !== ADMIN_PASSWORD) {
+      if(pw !== null) alert('비밀번호가 올바르지 않습니다.');
+      return;
+    }
+    adminUnlocked = true;
+  }
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='admin') renderAdmin();
+}
+
+// ===== Collect Form Data =====
+function getFormData() {
+  return {
+    contact: {
+      contactPerson: document.getElementById('contactPerson').value,
+      contactEmail: document.getElementById('contactEmail').value
+    },
+    logistics: {
+      dutyExemption: document.getElementById('dutyExemption').value,
+      tariffRate: document.getElementById('tariffRate').value,
+      deliveryAddr: document.getElementById('deliveryAddr').value,
+      forwarder: document.getElementById('forwarder').value,
+      storageFacility: document.getElementById('storageFacility').value,
+      storageCapacity: document.getElementById('storageCapacity').value,
+      distPersonnel: document.getElementById('distPersonnel').value,
+      distDept: document.getElementById('distDept').value
+    },
+    items: {
+      summer: document.getElementById('summer').value,
+      transitional: document.getElementById('transitional').value,
+      winter: document.getElementById('winter').value,
+      coldAccessories: document.getElementById('coldAccessories').value,
+      otherItemsDetail: document.getElementById('otherItemsDetail').value
+    },
+    eyewear: {
+      eyeglasses: document.getElementById('eyeglasses').value,
+      sunglasses: document.getElementById('sunglasses').value,
+      eyewearSpecsConfirmed: document.getElementById('eyewearSpecsConfirmed').value,
+      eyeChildQty: document.getElementById('eyeChildQty').value,
+      eyeTeenQty: document.getElementById('eyeTeenQty').value,
+      eyeAdultMQty: document.getElementById('eyeAdultMQty').value,
+      eyeAdultLQty: document.getElementById('eyeAdultLQty').value,
+      eyeRemarks: document.getElementById('eyeRemarks').value,
+      sunChildQty: document.getElementById('sunChildQty').value,
+      sunTeenQty: document.getElementById('sunTeenQty').value,
+      sunAdultMQty: document.getElementById('sunAdultMQty').value,
+      sunAdultLQty: document.getElementById('sunAdultLQty').value,
+      sunRemarks: document.getElementById('sunRemarks').value
+    },
+    other: {
+      avoidItemsDetail: document.getElementById('avoidItemsDetail').value,
+      comments: document.getElementById('comments').value
+    }
+  };
+}
+
+// ===== Populate Form from Data =====
+function populateForm(data) {
+  if(!data) return;
+  if(data.contact) {
+    Object.keys(data.contact).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.contact[k] || '';
+    });
+  }
+  if(data.logistics) {
+    Object.keys(data.logistics).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.logistics[k] || '';
+    });
+  }
+  if(data.items) {
+    Object.keys(data.items).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.items[k] || '';
+    });
+  }
+  if(data.eyewear) {
+    Object.keys(data.eyewear).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.eyewear[k] || '';
+    });
+    toggleEyewearDetail();
+    autoGrow(document.getElementById('eyeRemarks'));
+    autoGrow(document.getElementById('sunRemarks'));
+  }
+  if(data.other) {
+    Object.keys(data.other).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.other[k] || '';
+    });
+  }
+}
+
+// ===== Load Country Data from Firebase =====
+function loadCountryData() {
+  const country = document.getElementById('countrySelect').value;
+  if(!country) return;
+  db.ref('surveys/' + country).once('value').then(snapshot => {
+    const data = snapshot.val();
+    if(data && data.formData) {
+      populateForm(data.formData);
+      alert(`📂 Loaded existing data for ${country}.`);
+    }
+  }).catch(err => console.error('Load error:', err));
+}
+
+// ===== Submit Survey to Firebase =====
+function submitSurvey() {
+  const country = document.getElementById('countrySelect').value;
+  if(!country){alert('Please select your country first.');return;}
+
+  const payload = {
+    formData: getFormData(),
+    status: 'submitted',
+    submittedAt: new Date().toISOString(),
+    country: country
+  };
+
+  db.ref('surveys/' + country).set(payload).then(() => {
+    alert(`✅ Survey submitted successfully for ${country}!\n\nYour response has been saved and is now visible on the monitoring dashboard.`);
+  }).catch(err => {
+    alert('❌ Error submitting survey: ' + err.message);
+  });
+}
+
+// ===== Save Draft to Firebase =====
+function saveDraft() {
+  const country = document.getElementById('countrySelect').value;
+  if(!country){alert('Please select your country first.');return;}
+
+  const payload = {
+    formData: getFormData(),
+    status: 'draft',
+    savedAt: new Date().toISOString(),
+    country: country
+  };
+
+  db.ref('surveys/' + country).set(payload).then(() => {
+    alert(`💾 Draft saved for ${country}. You can return to complete and submit later.`);
+  }).catch(err => {
+    alert('❌ Error saving draft: ' + err.message);
+  });
+}
+
+// ===== Dashboard: Real-time Monitoring =====
+function renderDashboard() {
+  const body = document.getElementById('dashboardBody');
+  db.ref('surveys').once('value').then(snapshot => {
+    const submissions = snapshot.val() || {};
+    let submitted = 0;
+    body.innerHTML = countries.map(c => {
+      const data = submissions[c.country];
+      const status = data && data.status === 'submitted' ? 'complete' : (data && data.status === 'draft' ? 'draft' : 'pending');
+      if(status === 'complete') submitted++;
+      const date = data ? (data.submittedAt || data.savedAt || '').split('T')[0] : '-';
+      const badge = status === 'complete' ? '<span class="status-badge status-complete">✅ Submitted</span>'
+        : status === 'draft' ? '<span class="status-badge" style="background:#e3f2fd;color:#1565c0;">📝 Draft</span>'
+        : '<span class="status-badge status-pending">⏳ Pending</span>';
+      return `<tr><td>${c.no}</td><td>${c.continent}</td><td>${c.region}</td><td>${c.country}</td><td>${badge}</td><td>${date}</td></tr>`;
+    }).join('');
+    document.getElementById('totalResponses').textContent = submitted;
+    document.getElementById('pendingCount').textContent = 14 - submitted;
+    document.getElementById('completionRate').textContent = Math.round(submitted/14*100) + '%';
+  });
+}
+
+// Real-time listener for dashboard auto-update
+db.ref('surveys').on('value', () => {
+  if(document.getElementById('dashboard').classList.contains('active')) {
+    renderDashboard();
+  }
+  if(document.getElementById('admin').classList.contains('active')) {
+    renderAdmin();
+  }
+});
+
+// ===== Admin: Detailed view & CSV export =====
+const FIELD_LABELS = {
+  contactPerson:'Contact Person', contactEmail:'Contact Email',
+  dutyExemption:'Duty Exemption', tariffRate:'Tariff Rate', deliveryAddr:'Delivery Address',
+  forwarder:'Freight Forwarder', storageFacility:'Storage Facility', storageCapacity:'Storage Capacity (㎡)',
+  distPersonnel:'Distribution Personnel', distDept:'Distribution Dept.',
+  summer:'Summer Clothing', transitional:'Transitional Clothing', winter:'Winter Clothing',
+  coldAccessories:'Cold Accessories', otherItemsDetail:'Other Items Requested',
+  eyeglasses:'Eyeglasses', sunglasses:'Sunglasses', eyewearSpecsConfirmed:'Donor-Confirmed Age/Size Specs',
+  eyeChildQty:'Eyeglasses - Children Qty', eyeTeenQty:'Eyeglasses - Teens Qty',
+  eyeAdultMQty:'Eyeglasses - Adult M Qty', eyeAdultLQty:'Eyeglasses - Adult L Qty', eyeRemarks:'Eyeglasses Remarks',
+  sunChildQty:'Sunglasses - Children Qty', sunTeenQty:'Sunglasses - Teens Qty',
+  sunAdultMQty:'Sunglasses - Adult M Qty', sunAdultLQty:'Sunglasses - Adult L Qty', sunRemarks:'Sunglasses Remarks',
+  avoidItemsDetail:'Items to Avoid', comments:'Comments & Suggestions'
+};
+
+function flattenFields(data) {
+  const f = (data && data.formData) || {};
+  const groups = [f.contact, f.logistics, f.items, f.eyewear, f.other];
+  const merged = Object.assign({}, ...groups.filter(Boolean));
+  const result = {};
+  Object.keys(FIELD_LABELS).forEach(key => { result[FIELD_LABELS[key]] = merged[key] || ''; });
+  return result;
+}
+
+function csvEscape(val) {
+  const s = (val === undefined || val === null) ? '' : String(val);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function renderAdmin() {
+  const container = document.getElementById('adminList');
+  db.ref('surveys').once('value').then(snapshot => {
+    const submissions = snapshot.val() || {};
+    container.innerHTML = countries.map(c => {
+      const data = submissions[c.country];
+      const status = data ? data.status : 'pending';
+      const badge = status === 'submitted' ? '<span class="status-badge status-complete">✅ Submitted</span>'
+        : status === 'draft' ? '<span class="status-badge" style="background:#e3f2fd;color:#1565c0;">📝 Draft</span>'
+        : '<span class="status-badge status-pending">⏳ Pending</span>';
+      const date = data ? (data.submittedAt || data.savedAt || '').split('T')[0] : '-';
+      const fields = flattenFields(data);
+      const rows = Object.entries(fields).map(([k, v]) =>
+        `<tr><td style="font-weight:600;width:240px;">${k}</td><td>${v || '-'}</td></tr>`).join('');
+      const deleteBtn = data
+        ? `<button class="btn btn-secondary" style="padding:6px 14px;font-size:0.8rem;color:#c0392b;border-color:#c0392b;" onclick="deleteSubmission('${c.country}')">🗑️ Reset Submission</button>`
+        : '';
+      return `<details style="background:#fff;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:12px 16px;text-align:left;">
+        <summary style="cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;">
+          <span>${c.no}. ${c.country} (${c.region})</span>
+          <span>${badge} <span style="font-weight:400;color:var(--wv-gray);font-size:0.8rem;margin-left:8px;">${date}</span></span>
+        </summary>
+        <div style="margin-top:12px;overflow-x:auto;">
+          <table><tbody>${rows}</tbody></table>
+        </div>
+        <div style="margin-top:10px;">${deleteBtn}</div>
+      </details>`;
+    }).join('');
+  });
+}
+
+function deleteSubmission(country) {
+  if (!confirm(`Reset the submission for ${country}? This will permanently delete their saved data.`)) return;
+  db.ref('surveys/' + country).remove().then(() => {
+    alert(`Submission for ${country} has been reset.`);
+    renderAdmin();
+    if (document.getElementById('dashboard').classList.contains('active')) renderDashboard();
+  }).catch(err => alert('❌ Error resetting submission: ' + err.message));
+}
+
+function exportToCSV() {
+  db.ref('surveys').once('value').then(snapshot => {
+    const submissions = snapshot.val() || {};
+    const header = ['No', 'Continent', 'Region', 'Country', 'Status', 'Submitted/Saved Date', ...Object.values(FIELD_LABELS)];
+    const rows = countries.map(c => {
+      const data = submissions[c.country];
+      const status = data ? data.status : 'pending';
+      const date = data ? (data.submittedAt || data.savedAt || '').split('T')[0] : '';
+      const fields = flattenFields(data);
+      return [c.no, c.continent, c.region, c.country, status, date, ...Object.values(fields)];
+    });
+    const csvContent = [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GIK_Survey_Responses_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }).catch(err => alert('❌ Error exporting data: ' + err.message));
+}
+
+// ===== Toggle Functions =====
+function toggleEyewearDetail() {
+  const show = document.getElementById('eyeglasses').value==='Yes' || document.getElementById('sunglasses').value==='Yes';
+  document.getElementById('eyewearDetail').style.display = show?'block':'none';
+}
+
+function autoGrow(el) {
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ===== Q&A: Real-time =====
+function postQuestion() {
+  const q = document.getElementById('newQuestion').value.trim();
+  if(!q){alert('Please enter a question.');return;}
+  const country = document.getElementById('countrySelect').value || 'Unknown';
+  const today = new Date().toISOString().split('T')[0];
+
+  const questionData = {
+    question: q,
+    askedBy: country,
+    date: today,
+    answer: ''
+  };
+
+  db.ref('qa').push(questionData).then(() => {
+    document.getElementById('newQuestion').value = '';
+    renderQA();
+  }).catch(err => alert('❌ Error posting question: ' + err.message));
+}
+
+function postAnswer(key) {
+  const input = document.getElementById('answerInput-' + key);
+  const answer = input.value.trim();
+  if(!answer){alert('Please enter an answer.');return;}
+
+  db.ref('qa/' + key).update({ answer: answer }).then(() => {
+    renderQA();
+  }).catch(err => alert('❌ Error posting answer: ' + err.message));
+}
+
+function renderQA() {
+  db.ref('qa').orderByChild('date').once('value').then(snapshot => {
+    const qaListDynamic = document.getElementById('qaListDynamic');
+    let html = '';
+    const items = [];
+    snapshot.forEach(child => { items.push({...child.val(), key: child.key}); });
+    items.reverse().forEach(item => {
+      const answerHtml = item.answer
+        ? `<div class="answer"><strong>A:</strong> ${item.answer}</div>`
+        : `<div class="qa-answer-form">
+             <textarea id="answerInput-${item.key}" placeholder="Anyone can write an answer..."></textarea>
+             <button class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;" onclick="postAnswer('${item.key}')">Submit Answer</button>
+           </div>`;
+      html += `<div class="qa-post">
+        <div class="question">Q: ${item.question}</div>
+        <div class="meta">Asked by: ${item.askedBy} FO | ${item.date}</div>
+        ${answerHtml}
+      </div>`;
+    });
+    qaListDynamic.innerHTML = html;
+  });
+}
+
+// Real-time Q&A listener
+db.ref('qa').on('value', () => { renderQA(); });
+
+// ===== Init =====
+renderDashboard();
+renderQA();
+</script>
+
+<footer style="background:var(--wv-dark);color:#aaa;padding:24px 32px;text-align:center;margin-top:40px;">
+  <p style="font-size:1.05rem;margin-bottom:6px;">© 2026 World Vision Korea — Asset Fund Team</p>
+  <p style="font-size:0.95rem;">For inquiries, contact the GIK Asset Fund Team | Template designed in collaboration with International Impact Project Team</p>
+  <p style="font-size:0.95rem;margin-top:6px;">Inquiries: <a href="mailto:Goods@worldvision.or.kr" style="color:var(--wv-orange);">Goods@worldvision.or.kr</a> | Designed & Developed by Asset Fund Team</p>
+</footer>
+</body>
+</html>
