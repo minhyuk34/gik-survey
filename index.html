@@ -295,6 +295,21 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
     </div>
   </div>
 
+  <!-- Paint -->
+  <div class="form-group">
+    <h3>🎨 Paint Needs Assessment</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Paint needed?</label>
+        <select id="paintNeeded" onchange="togglePaintDetail()"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field" id="paintTypeField" style="display:none;">
+        <label>Paint (type TBC: oil-based/water-based, etc.)</label>
+        <select id="paintType"><option value="">Select</option><option>TBC</option><option>Oil-based</option><option>Water-based</option><option>Other</option></select>
+      </div>
+    </div>
+  </div>
+
   <!-- Other Items -->
   <div class="form-group">
     <h3>📦 Restrictions</h3>
@@ -498,6 +513,10 @@ function getFormData() {
       mosquitoSpray: document.getElementById('mosquitoSpray').value,
       mosquitoSprayDetail: document.getElementById('mosquitoSprayDetail').value
     },
+    paint: {
+      paintNeeded: document.getElementById('paintNeeded').value,
+      paintType: document.getElementById('paintType').value
+    },
     other: {
       avoidItemsDetail: document.getElementById('avoidItemsDetail').value,
       otherItemsGeneral: document.getElementById('otherItemsGeneral').value,
@@ -543,6 +562,13 @@ function populateForm(data) {
       if(el) el.value = data.mosquito[k] || '';
     });
     toggleMosquitoDetail();
+  }
+  if(data.paint) {
+    Object.keys(data.paint).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.paint[k] || '';
+    });
+    togglePaintDetail();
   }
   if(data.other) {
     Object.keys(data.other).forEach(k => {
@@ -650,12 +676,13 @@ const FIELD_LABELS = {
   sunChildQty:'Sunglasses - Children Qty', sunTeenQty:'Sunglasses - Teens Qty',
   sunAdultMQty:'Sunglasses - Adult M Qty', sunAdultLQty:'Sunglasses - Adult L Qty', sunRemarks:'Sunglasses Remarks',
   mosquitoSpray:'Mosquito Repellent Spray Needed', mosquitoSprayDetail:'Mosquito Spray - Product Form/Customs Notes',
+  paintNeeded:'Paint Needed', paintType:'Paint (type TBC: oil-based/water-based, etc.)',
   avoidItemsDetail:'Items to Avoid', otherItemsGeneral:'Other Items Requested', comments:'Comments & Questions'
 };
 
 function flattenFields(data) {
   const f = (data && data.formData) || {};
-  const groups = [f.contact, f.logistics, f.items, f.eyewear, f.mosquito, f.other];
+  const groups = [f.contact, f.logistics, f.items, f.eyewear, f.mosquito, f.paint, f.other];
   const merged = Object.assign({}, ...groups.filter(Boolean));
   const result = {};
   Object.keys(FIELD_LABELS).forEach(key => { result[FIELD_LABELS[key]] = merged[key] || ''; });
@@ -741,6 +768,10 @@ function toggleForwarderDetail() {
 
 function toggleMosquitoDetail() {
   document.getElementById('mosquitoDetail').style.display = document.getElementById('mosquitoSpray').value==='Yes'?'block':'none';
+}
+
+function togglePaintDetail() {
+  document.getElementById('paintTypeField').style.display = document.getElementById('paintNeeded').value==='Yes'?'flex':'none';
 }
 
 function autoGrow(el) {
