@@ -120,6 +120,16 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
           <option value="Guatemala">Guatemala (LACRO)</option>
           <option value="Albania">Albania (MEERO)</option>
           <option value="Bosnia-Herzegovina">Bosnia-Herzegovina (MEERO)</option>
+          <option value="Burundi">Burundi (EARO)</option>
+          <option value="Kenya">Kenya (EARO)</option>
+          <option value="Rwanda">Rwanda (EARO)</option>
+          <option value="Tanzania">Tanzania (EARO)</option>
+          <option value="Uganda">Uganda (EARO)</option>
+          <option value="Eswatini">Eswatini (SARO)</option>
+          <option value="Malawi">Malawi (SARO)</option>
+          <option value="Zambia">Zambia (SARO)</option>
+          <option value="Zimbabwe">Zimbabwe (SARO)</option>
+          <option value="Ghana">Ghana (WARO)</option>
         </select>
       </div>
       <div class="field">
@@ -264,6 +274,27 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
     </div>
   </div>
 
+  <!-- Mosquito Repellent Spray -->
+  <div class="form-group">
+    <h3>🦟 Mosquito Repellent Spray Needs Assessment</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Mosquito repellent spray needed?</label>
+        <select id="mosquitoSpray" onchange="toggleMosquitoDetail()"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+    <div id="mosquitoDetail" style="display:none;">
+      <p style="font-size:0.85rem;color:#333;margin-bottom:8px;">Candidate product under review with Yuhan Corporation: <strong>Happy Home Aerosol Water-based Unscented SM 500ml</strong> (수성 에어로졸/Water-based Aerosol, 무향/Unscented, 500ml).</p>
+      <p style="font-size:0.8rem;color:#c0392b;margin-bottom:12px;">※ Aerosol products may be classified as hazardous materials and could require additional documentation for transport and customs clearance (potentially similar to the level of documentation required for prescription medicine shipments to Lebanon). Please specify the product form as precisely as possible so your FO can review feasibility accurately.</p>
+      <div class="form-row">
+        <div class="field" style="grid-column:1/-1;">
+          <label>Please specify the required product form and any customs/import considerations</label>
+          <textarea id="mosquitoSprayDetail" placeholder="e.g., Water-based Aerosol, Unscented, 500ml — confirm if this product form can clear customs, and note any additional hazmat documentation required"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Other Items -->
   <div class="form-group">
     <h3>📦 Restrictions</h3>
@@ -309,7 +340,7 @@ th { background:var(--wv-dark); color:#fff; font-weight:500; }
   <div class="dashboard-grid">
     <div class="stat-card"><div class="number" id="totalResponses">3</div><div class="label">Submitted</div></div>
     <div class="stat-card"><div class="number" id="pendingCount">11</div><div class="label">Pending</div></div>
-    <div class="stat-card"><div class="number">12</div><div class="label">Total FOs</div></div>
+    <div class="stat-card"><div class="number">22</div><div class="label">Total FOs</div></div>
     <div class="stat-card"><div class="number" id="completionRate">21%</div><div class="label">Completion</div></div>
   </div>
   <table>
@@ -390,7 +421,17 @@ const countries = [
   {no:9,continent:'Asia',region:'SAPO',country:'Sri Lanka'},
   {no:10,continent:'Americas',region:'LACRO',country:'Guatemala'},
   {no:11,continent:'Europe',region:'MEERO',country:'Albania'},
-  {no:12,continent:'Europe',region:'MEERO',country:'Bosnia-Herzegovina'}
+  {no:12,continent:'Europe',region:'MEERO',country:'Bosnia-Herzegovina'},
+  {no:13,continent:'Africa',region:'EARO',country:'Burundi'},
+  {no:14,continent:'Africa',region:'EARO',country:'Kenya'},
+  {no:15,continent:'Africa',region:'EARO',country:'Rwanda'},
+  {no:16,continent:'Africa',region:'EARO',country:'Tanzania'},
+  {no:17,continent:'Africa',region:'EARO',country:'Uganda'},
+  {no:18,continent:'Africa',region:'SARO',country:'Eswatini'},
+  {no:19,continent:'Africa',region:'SARO',country:'Malawi'},
+  {no:20,continent:'Africa',region:'SARO',country:'Zambia'},
+  {no:21,continent:'Africa',region:'SARO',country:'Zimbabwe'},
+  {no:22,continent:'Africa',region:'WARO',country:'Ghana'}
 ];
 
 // ===== Navigation =====
@@ -453,6 +494,10 @@ function getFormData() {
       sunAdultLQty: document.getElementById('sunAdultLQty').value,
       sunRemarks: document.getElementById('sunRemarks').value
     },
+    mosquito: {
+      mosquitoSpray: document.getElementById('mosquitoSpray').value,
+      mosquitoSprayDetail: document.getElementById('mosquitoSprayDetail').value
+    },
     other: {
       avoidItemsDetail: document.getElementById('avoidItemsDetail').value,
       otherItemsGeneral: document.getElementById('otherItemsGeneral').value,
@@ -491,6 +536,13 @@ function populateForm(data) {
     toggleEyewearDetail();
     autoGrow(document.getElementById('eyeRemarks'));
     autoGrow(document.getElementById('sunRemarks'));
+  }
+  if(data.mosquito) {
+    Object.keys(data.mosquito).forEach(k => {
+      const el = document.getElementById(k);
+      if(el) el.value = data.mosquito[k] || '';
+    });
+    toggleMosquitoDetail();
   }
   if(data.other) {
     Object.keys(data.other).forEach(k => {
@@ -597,12 +649,13 @@ const FIELD_LABELS = {
   eyeAdultMQty:'Eyeglasses - Adult M Qty', eyeAdultLQty:'Eyeglasses - Adult L Qty', eyeRemarks:'Eyeglasses Remarks',
   sunChildQty:'Sunglasses - Children Qty', sunTeenQty:'Sunglasses - Teens Qty',
   sunAdultMQty:'Sunglasses - Adult M Qty', sunAdultLQty:'Sunglasses - Adult L Qty', sunRemarks:'Sunglasses Remarks',
+  mosquitoSpray:'Mosquito Repellent Spray Needed', mosquitoSprayDetail:'Mosquito Spray - Product Form/Customs Notes',
   avoidItemsDetail:'Items to Avoid', otherItemsGeneral:'Other Items Requested', comments:'Comments & Questions'
 };
 
 function flattenFields(data) {
   const f = (data && data.formData) || {};
-  const groups = [f.contact, f.logistics, f.items, f.eyewear, f.other];
+  const groups = [f.contact, f.logistics, f.items, f.eyewear, f.mosquito, f.other];
   const merged = Object.assign({}, ...groups.filter(Boolean));
   const result = {};
   Object.keys(FIELD_LABELS).forEach(key => { result[FIELD_LABELS[key]] = merged[key] || ''; });
@@ -684,6 +737,10 @@ function toggleEyewearDetail() {
 
 function toggleForwarderDetail() {
   document.getElementById('forwarderDetail').style.display = document.getElementById('forwarderEstablished').value==='Yes'?'grid':'none';
+}
+
+function toggleMosquitoDetail() {
+  document.getElementById('mosquitoDetail').style.display = document.getElementById('mosquitoSpray').value==='Yes'?'block':'none';
 }
 
 function autoGrow(el) {
